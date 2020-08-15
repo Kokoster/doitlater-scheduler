@@ -4,6 +4,11 @@ import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import TextField from '@material-ui/core/TextField'
+import IconButton from '@material-ui/core/IconButton'
+
+import AddIcon from '@material-ui/icons/Add';
+import ClearIcon from '@material-ui/icons/Clear';
+
 
 import Task from './Task'
 
@@ -30,20 +35,40 @@ export default class TaskList extends React.Component {
     })
   }
 
-  disableEditMode = () => {
+  saveTask = (disableOnEmptyStr) => () => {
     const { newTaskName, tasks } = this.state
 
+    let newTasksList = tasks
+    let editMode = true && disableOnEmptyStr
+    if (newTaskName !== undefined && newTaskName.trim() !== '') {
+      newTasksList = [...tasks, { name: newTaskName }]
+      editMode = false
+    }
+
+    this.setState(
+      {
+        newTaskEditMode: editMode,
+        tasks: newTasksList,
+        newTaskName: '',
+      },
+    )
+  }
+
+  cancelTask = () => {
     this.setState({
       newTaskEditMode: false,
+      newTaskName: '',
     })
+  }
 
-    if (newTaskName !== undefined && newTaskName.trim() !== '') {
-      this.setState(
-        {
-          tasks: [...tasks, { name: newTaskName }],
-          newTaskName: '',
-        },
-      )
+  handleKeyDown = (e) => {
+    const { newTaskEditMode } = this.state
+
+    // check for escape
+    if (e.keyCode === 27 && newTaskEditMode) {
+      this.setState({
+        newTaskEditMode: false,
+      })
     }
   }
 
@@ -58,23 +83,29 @@ export default class TaskList extends React.Component {
 
     if (newTaskEditMode) {
       return (
+        // onBlur={this.saveTask(false)}
         <ListItem>
-          <TextField 
+          <TextField
             id="new-task-creation"
             autoFocus
             label="New task"
-            onBlur={this.disableEditMode}
-            onChange={this.updateNewTaskName} />
+            onChange={this.updateNewTaskName}
+          />
+          <IconButton edge="end" onClick={this.saveTask(true)}>
+            <AddIcon fonSize="small" />
+          </IconButton>
+          <IconButton edge="end" onClick={this.cancelTask}>
+            <ClearIcon fontSize="small" />
+          </IconButton>
         </ListItem>
       )
     }
 
     return (
-      <ListItem button>
+      <ListItem button onClick={this.addNewTask}>
         <ListItemText
           primary="Add new task..."
           style={{ color: '#999999' }}
-          onClick={this.addNewTask}
         />
       </ListItem>
     )
@@ -88,6 +119,7 @@ export default class TaskList extends React.Component {
         style={{ width: 300 }}
         component="nav"
         aria-label="tasks list"
+        onKeyDown={this.handleKeyDown}
       >
         {
           tasks.map((task) => (
